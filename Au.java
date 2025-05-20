@@ -5,7 +5,7 @@ try {
     File file = new File(bookingsFile);
     if (!file.exists()) {
         System.out.println("File not found: " + bookingsFile);
-        return; // stop here if file is missing
+        return; //missing file
     }
 
     Scanner scan = new Scanner(file);
