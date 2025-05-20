@@ -82,6 +82,7 @@ public class Project_1 {
             }
             return bookings;
         }
+        /*
         public String getid()
         {
             return bookingid;
@@ -100,5 +101,5 @@ public class Project_1 {
         public double getTotal_after_discount()
         {
             return Total_after_discount;
-        }
+        } */
     }
