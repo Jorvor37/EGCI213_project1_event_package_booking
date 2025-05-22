@@ -1,13 +1,17 @@
-public static class discountcriterion{
+public class Project1 {
+
+    public static class discountcriterion{
         private String filename;
         int min_subtotal;
         double discountrate;
         ArrayList<discountcriterion> discounts;
-        
+        private List<discountcriterion> discountrules;
        
     public discountcriterion(int min_subtotal, double discountrate){
         this.min_subtotal = min_subtotal;
         this.discountrate = discountrate;
+        
+        discountrules.add(new discountcriterion(100000,0.025));
         
     }
     
@@ -43,17 +47,14 @@ public static class discountcriterion{
    // }
     public double GetDiscount(double price)
     {
-        double discount = 0;
-        
-        if(price>100000&&price<=500000){
-            discount = price*0.025;
+        double bestrate = 0;
+        for (discountcriterion rule : discountrules) {
+    if (price >= rule.min_subtotal && rule.discountrate > bestrate)
+    {
+        bestrate = rule.discountrate;
     }
-        else if(price>500000&&price<=1000000){
-            discount = price*0.05;
-        }
-        else if(price>1000000){
-            discount = price*0.1;
-        }
-        return discount;
     }
+     return price*bestrate;       
 }
+}
+    /**
