@@ -24,6 +24,8 @@ public class Project1 {
         this.discountrate = discountrate;
         
         discountrules.add(new discountcriterion(100000,0.025));
+        discountrules.add(new discountcriterion(500000,0.05));
+        discountrules.add(new discountcriterion(1000000,0.10))
         
     }
     
