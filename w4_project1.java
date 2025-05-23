@@ -15,133 +15,160 @@ public class w4_project1 {
         String path = "src/main/java/Project1_6680081/"; 
         
         String inItems      = path + "items.txt";       //read Items
-        String inDiscounts  = path + "discounts.txt";   //read Discounts
+        String inDiscounts  = path + "discountss.txt";   //read Discounts
         String inBookings   = path + "bookings.txt";    //read Bookings
 
-        ArrayList<booking> bookings = new ArrayList<>();
+        ArrayList<Booking> bookings = new ArrayList<>();
         ArrayList<DiscountCriterion> discounts = new ArrayList<>();
 
         Room[] rooms = new Room[3]; 
         Meal[] meals = new Meal[3];
+        
+        Scanner userInput = new Scanner(System.in);
 
 ////////////////////////////////////////////////////////////////////////////
-       // Read items.txt
-        try (Scanner scan = new Scanner(new File(inItems))) {
-            if (scan.hasNextLine()) scan.nextLine(); // skip header line
-            
-            int roomIdx = 0, mealIdx = 0;
-            while (scan.hasNextLine()) {
-                String line = scan.nextLine().trim();
-                if (line.isEmpty()) continue;
-                
-                String[] parts = line.split(",");
-                //error handler
-                if (parts.length < 3) {
-                    System.err.println("Invalid item line: " + line);
-                    continue;
+        // Read items.txt
+        
+        boolean fileOpened = false;
+        
+        while(!fileOpened) {
+            try (Scanner scan = new Scanner(new File(inItems))) {
+                if (scan.hasNextLine()) scan.nextLine(); // skip header line
+
+                int roomIdx = 0, mealIdx = 0;
+                while (scan.hasNextLine()) {
+                    String line = scan.nextLine().trim();
+                    if (line.isEmpty()) continue;
+
+                    String[] parts = line.split(",");
+
+                    //store data code, name, price
+                    String code = parts[0].trim();
+                    String name = parts[1].trim();
+                    double unitPrice = Double.parseDouble(parts[2].trim());
+
+                    if (code.startsWith("R")) {
+                        if (roomIdx < rooms.length) {
+                            rooms[roomIdx++] = new Room(code, name, unitPrice);
+                        }
+                    } else if (code.startsWith("M")) {
+                        if (mealIdx < meals.length) {
+                            meals[mealIdx++] = new Meal(code, name, unitPrice);
+                        }
+                    } else {
+                        System.err.println("Unknown item code prefix: " + code);
+                    }
                 }
                 
-                //store data code, name, price
-                String code = parts[0].trim();
-                String name = parts[1].trim();
-                double unitPrice = Double.parseDouble(parts[2].trim());
+                //flag file open sucessfully
+                fileOpened = true;
                 
-                if (code.startsWith("R")) {
-                    if (roomIdx < rooms.length) {
-                        rooms[roomIdx++] = new Room(code, name, unitPrice);
-                    }
-                } else if (code.startsWith("M")) {
-                    if (mealIdx < meals.length) {
-                        meals[mealIdx++] = new Meal(code, name, unitPrice);
-                    }
-                } else {
-                    System.err.println("Unknown item code prefix: " + code);
-                }
+            } catch (FileNotFoundException e) {
+                System.err.println("FileNotFoundException: " + path + inItems);
+                System.out.println("New file name = ");
+                inItems = path + userInput.nextLine().trim();
             }
-        } catch (FileNotFoundException e) {
-            System.err.println("Items file not found: " + inItems);
-            // You might want to exit or handle this scenario gracefully
         }
-
+        
 ////////////////////////////////////////////////////////////////////////////
-       // Read discounts.txt
-        try (Scanner scan = new Scanner(new File(inDiscounts))) {
-            if (scan.hasNextLine()) scan.nextLine(); // skip header line
+        // Read discounts.txt
+        
+        fileOpened = false;
+        
+        while(!fileOpened) {
+            try (Scanner scan = new Scanner(new File(inDiscounts))) {
+                if (scan.hasNextLine()) scan.nextLine(); // skip header line
 
-            while (scan.hasNextLine()) {
-                String line = scan.nextLine().trim();
-                if (line.isEmpty()) continue;
+                while (scan.hasNextLine()) {
+                    String line = scan.nextLine().trim();
+                    if (line.isEmpty()) continue;
 
-                String[] parts = line.split(",");
-                if (parts.length < 2) {
-                    System.err.println("Invalid discount line: " + line);
-                    continue;
+                    String[] parts = line.split(",");
+                    if (parts.length < 2) {
+                        System.err.println("Invalid discount line: " + line);
+                        continue;
+                    }
+
+                    int minSubtotal = Integer.parseInt(parts[0].trim());
+                    double discountRate = Double.parseDouble(parts[1].trim());
+
+                    discounts.add(new DiscountCriterion(minSubtotal, discountRate));
                 }
-
-                int minSubtotal = Integer.parseInt(parts[0].trim());
-                double discountRate = Double.parseDouble(parts[1].trim());
-
-                discounts.add(new DiscountCriterion(minSubtotal, discountRate));
+                
+                //flag file open sucessfully
+                fileOpened = true;
+                
+            } catch (FileNotFoundException e) {
+                System.err.println("FileNotFoundException: " + path + inDiscounts);
+                System.out.println("New file name = ");
+                inDiscounts = path + userInput.nextLine().trim(); //don't forget path
             }
-        } catch (FileNotFoundException e) {
-            System.err.println("Discount file not found: " + inDiscounts);
         }
 
 ////////////////////////////////////////////////////////////////////////////
         //read bookings.txt
 
+        fileOpened = false;
         
-        try (Scanner scan = new Scanner(new File(inBookings))) {
-            if(scan.hasNextLine()) scan.nextLine();
-            
-            while(scan.hasNextLine())
-            {
-                String line = scan.nextLine(); 
-                if(line.isEmpty()) continue;
-                
-                try{
-                    String[] part = line.split(",");
-                    if (part.length < 6) throw new Exception ("Missing values");
-                    
-                    //general information
-                    String bookingid = part[0].trim();
-                    String customerid = part[1].trim();
-                    int days = Integer.parseInt(part[2].trim());
-                    
-                    //rooms
-                    String[] roomparts = part[3].trim().split(":");
-                    if (roomparts.length != 3) throw new Exception ("Invalid room format");
-                    int[] room_count = new int[3];
-                    for (int i = 0; i < 3; i++)
-                    {
-                        room_count[i] = Integer.parseInt(roomparts[i].trim());
-                    }
-                    int persons = Integer.parseInt(part[4].trim());
-                    
-                    //meals
-                    String[] mealparts = part[5].trim().split(":");
-                    if (mealparts.length != 3) throw new Exception ("Invalid meal format");
-                    int[] meal_count = new int[3];
-                    for (int i = 0; i < 3; i++)
-                    {
-                        meal_count[i] = Integer.parseInt(mealparts[i].trim());
-                    }
-                    
-                    //create
-                    Booking book = new Booking(bookingid, customerid, days, room_count, persons, meal_count);
-                    book.calculation_Total(rooms, meals, discounts);
-                    bookings.add(book);
-                
-                }catch (Exception e){
-                    System.err.println("Skipping invalid line: " + line);
-                }
-            }
-        }catch (FileNotFoundException e){
-            System.err.println("File not found: " + inBookings);
-            //return;
-        }
+        while(!fileOpened) {
+            try (Scanner scan = new Scanner(new File(inBookings))) {
+                if(scan.hasNextLine()) scan.nextLine(); //skip header
 
-////////////////////////////////////////////////////////////////////////////+
+                while(scan.hasNextLine())
+                {
+                    String line = scan.nextLine(); 
+                    if(line.isEmpty()) continue;
+
+                    try{
+                        String[] part = line.split(",");
+                        if (part.length < 6) throw new Exception ("Missing values");
+
+                        //general information
+                        String bookingid = part[0].trim();
+                        String customerid = part[1].trim();
+                        int days = Integer.parseInt(part[2].trim());
+
+                        //rooms
+                        String[] roomparts = part[3].trim().split(":");
+                        if (roomparts.length != 3) throw new Exception ("Invalid room format");
+                        int[] room_count = new int[3];
+                        for (int i = 0; i < 3; i++)
+                        {
+                            room_count[i] = Integer.parseInt(roomparts[i].trim());
+                        }
+                        int persons = Integer.parseInt(part[4].trim());
+
+                        //meals
+                        String[] mealparts = part[5].trim().split(":");
+                        if (mealparts.length != 3) throw new Exception ("Invalid meal format");
+                        int[] meal_count = new int[3];
+                        for (int i = 0; i < 3; i++)
+                        {
+                            meal_count[i] = Integer.parseInt(mealparts[i].trim());
+                        }
+
+                        //create
+                        Booking book = new Booking(bookingid, customerid, days, room_count, persons, meal_count);
+                        book.calculateTotal(rooms, meals, discounts);
+                        bookings.add(book);
+
+                    }catch (Exception e){
+                        System.err.println("Skipping invalid line: " + line);
+                    }
+                }
+                
+                //flag file open sucessfully
+                fileOpened = true;
+                
+            }catch (FileNotFoundException e){
+                System.err.println("FileNotFoundException: " + path + inBookings);
+                System.out.println("New file name = ");
+                inBookings = path + userInput.nextLine().trim(); //don't forget path
+            }
+            
+        } //end of while fileOpened loop
+
+////////////////////////////////////////////////////////////////////////////
         // Sotring and printing TEST
         Map<String, Customer> customers = new HashMap<>();
 
@@ -166,7 +193,8 @@ public class w4_project1 {
             System.out.println("\n");
         }
 
-
+        //close Scanner UserInput
+        userInput.close();
     } //end of main
 } //end of w4_project1
 
