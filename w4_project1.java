@@ -14,18 +14,82 @@ public class w4_project1 {
     public static void main(String[] args){
         String path = "src/main/java/Project1_6680081/"; 
         
-        
-        String inBookings   = path + "bookings.txt";    //read Bookings
-        String inDiscounts  = path + "discounts.txt";   //read Discounts
         String inItems      = path + "items.txt";       //read Items
-        /*
-        System.out.println("Read from "+path+"bookings.txt");
-        System.out.println("Read from "+path+"discounts.txt");
-        */
+        String inDiscounts  = path + "discounts.txt";   //read Discounts
+        String inBookings   = path + "bookings.txt";    //read Bookings
 
-       ArrayList<booking> bookings = new ArrayList<>();
+        ArrayList<booking> bookings = new ArrayList<>();
+        ArrayList<DiscountCriterion> discounts = new ArrayList<>();
+
         Room[] rooms = new Room[3]; 
         Meal[] meals = new Meal[3];
+
+////////////////////////////////////////////////////////////////////////////
+       // Read items.txt
+        try (Scanner scan = new Scanner(new File(inItems))) {
+            if (scan.hasNextLine()) scan.nextLine(); // skip header line
+            
+            int roomIdx = 0, mealIdx = 0;
+            while (scan.hasNextLine()) {
+                String line = scan.nextLine().trim();
+                if (line.isEmpty()) continue;
+                
+                String[] parts = line.split(",");
+                //error handler
+                if (parts.length < 3) {
+                    System.err.println("Invalid item line: " + line);
+                    continue;
+                }
+                
+                //store data code, name, price
+                String code = parts[0].trim();
+                String name = parts[1].trim();
+                double unitPrice = Double.parseDouble(parts[2].trim());
+                
+                if (code.startsWith("R")) {
+                    if (roomIdx < rooms.length) {
+                        rooms[roomIdx++] = new Room(code, name, unitPrice);
+                    }
+                } else if (code.startsWith("M")) {
+                    if (mealIdx < meals.length) {
+                        meals[mealIdx++] = new Meal(code, name, unitPrice);
+                    }
+                } else {
+                    System.err.println("Unknown item code prefix: " + code);
+                }
+            }
+        } catch (FileNotFoundException e) {
+            System.err.println("Items file not found: " + inItems);
+            // You might want to exit or handle this scenario gracefully
+        }
+
+////////////////////////////////////////////////////////////////////////////
+       // Read discounts.txt
+        try (Scanner scan = new Scanner(new File(inDiscounts))) {
+            if (scan.hasNextLine()) scan.nextLine(); // skip header line
+
+            while (scan.hasNextLine()) {
+                String line = scan.nextLine().trim();
+                if (line.isEmpty()) continue;
+
+                String[] parts = line.split(",");
+                if (parts.length < 2) {
+                    System.err.println("Invalid discount line: " + line);
+                    continue;
+                }
+
+                int minSubtotal = Integer.parseInt(parts[0].trim());
+                double discountRate = Double.parseDouble(parts[1].trim());
+
+                discounts.add(new DiscountCriterion(minSubtotal, discountRate));
+            }
+        } catch (FileNotFoundException e) {
+            System.err.println("Discount file not found: " + inDiscounts);
+        }
+
+////////////////////////////////////////////////////////////////////////////
+        //read bookings.txt
+
         
         try (Scanner scan = new Scanner(new File(inBookings))) {
             if(scan.hasNextLine()) scan.nextLine();
@@ -64,22 +128,48 @@ public class w4_project1 {
                     }
                     
                     //create
-                    booking book = new booking(bookingid, customerid, days, room_count, persons, meal_count);
+                    Booking book = new Booking(bookingid, customerid, days, room_count, persons, meal_count);
                     book.calculation_Total(rooms, meals, discounts);
-                    bookings.add(b);
+                    bookings.add(book);
                 
                 }catch (Exception e){
                     System.err.println("Skipping invalid line: " + line);
                 }
             }
-            scan.close();
         }catch (FileNotFoundException e){
             System.err.println("File not found: " + inBookings);
             //return;
         }
 
-    }
-}
+////////////////////////////////////////////////////////////////////////////+
+        // Sotring and printing TEST
+        Map<String, Customer> customers = new HashMap<>();
+
+        for (Booking b : bookings) {
+            customers.putIfAbsent(b.getCustomerId(), new Customer(b.getCustomerId()));
+            customers.get(b.getCustomerId()).addBooking(b);
+        }
+
+        List<Customer> sortedCustomers = new ArrayList<>(customers.values());
+        sortedCustomers.sort((c1, c2) -> {
+            int cmp = Double.compare(c2.getTotalBookingAmount(), c1.getTotalBookingAmount());
+            if (cmp != 0) return cmp;
+            return c1.getCustomerId().compareTo(c2.getCustomerId());
+        });
+
+        for (Customer c : sortedCustomers) {
+            System.out.printf("Customer %s total booking amount: %.2f\n", c.getCustomerId(), c.getTotalBookingAmount());
+            System.out.print("Bookings: ");
+            for (Booking b : c.getBookings()) {
+                System.out.print(b.getBookingId() + " ");
+            }
+            System.out.println("\n");
+        }
+
+
+    } //end of main
+} //end of w4_project1
+
 
 ////////////////////////////////////////////////////////////////////////////
 ///use abstract to be structure of item
@@ -136,23 +226,12 @@ class Meal extends Item {
 /// Customer class to store bookings per customer [2. DONE]
 class Customer {
     private String customerId;
-    private ArrayList<Booking> bookings = new ArrayList<>();
+    private List<Booking> bookings = new ArrayList<>();
 
-    public Customer(String customerId) {
-        this.customerId = customerId;
-    }
-
-    public String getCustomerId() { return customerId; }
-
-    public void addBooking(Booking b) {
-        bookings.add(b);
-    }
-
-    public ArrayList<Booking> getBookings() {
-        return bookings;
-    }
-
-    // Sum of all booking subtotals (before discount)
+    public Customer(String customerId)              {this.customerId = customerId;}
+    public void addBooking(Booking booking)         {bookings.add(booking);}
+    public String getCustomerId()                   {return customerId;}
+    public List<Booking> getBookings()              {return bookings;}
     public double getTotalBookingAmount() {
         double total = 0;
         for (Booking b : bookings) {
@@ -162,54 +241,84 @@ class Customer {
     }
 }
 
-class booking
-{
-    private String bookingid;
-    private String customerid;
+////////////////////////////////////////////////////////////////////////////
+/// Booking class [3. DONE]
+class Booking {
+    private String bookingId;
+    private String customerId;
     private int days;
-    private int[] room_count;
+    private int[] roomCount;
     private int persons;
-    private int[] meal_count;
-        
+    private int[] mealCount;
+
     private double roomTotal;
     private double mealTotal;
-    private double subTotal; //room + meal
-    private double discount;
-    private double Total_after_discount;
-    
-    public booking(String bookingid, String customerid, int days, int[] room_count, int persons, int[] meal_count) //constructor
-    {
-        this.bookingid = bookingid;
-        this.customerid = customerid;
+    private double subTotal;
+    private double discountAmount;
+    private double totalAfterDiscount;
+
+    //constructor
+    public Booking(String bookingId, String customerId, int days, int[] roomCount, int persons, int[] mealCount) {
+        this.bookingId = bookingId;
+        this.customerId = customerId;
         this.days = days;
-        this.room_count = room_count;
+        this.roomCount = roomCount;
         this.persons = persons;
-        this.meal_count = meal_count;
+        this.mealCount = mealCount;
     }
-    
-    public void calculation_Total(Room[] rooms, Meal[] meals, ArrayList<DiscountCriterion> discounts)
-    {
+
+    public void calculateTotal(Room[] rooms, Meal[] meals, List<DiscountCriterion> discounts) {
+
+        //calRoom [3.1 DONE]
         roomTotal = 0;
-        for(int i = 0; i < 3; i++)
-        {
-            //double calPrice(int quantity, int days, int persons) but person here not use
-            roomTotal += rooms[i].calPrice(room_count[i], days, 1);
+        for (int i = 0; i < rooms.length; i++) {
+            roomTotal += rooms[i].calPrice(roomCount[i], days, 1);
         }
-           
+
+        //calMeal [3.2 DONE]
         mealTotal = 0;
-        for(int i = 0; i < 3; i++)
-        {
-            //double calPrice(int quantity, int days, int persons)
-            mealTotal += meals[i].calPrice(meal_count[i], days, persons);
+        for (int i = 0; i < meals.length; i++) {
+            mealTotal += meals[i].calPrice(mealCount[i], days, persons);
         }
-        
+
+        //subTotal [3.3 DONE]
         subTotal = roomTotal + mealTotal;
-        discount = DiscountCriterion.getBestDiscount(subTotal, discounts);
-        Total_after_discount = subTotal * (1 - discount / 100.0);
+
+        //Discount [3.4 DONE]
+        double discountRate = DiscountCriterion.getBestDiscountRate(subTotal, discounts);
+        discountAmount = subTotal * (discountRate / 100.0);  // discount is percent
+        totalAfterDiscount = subTotal - discountAmount;
+    }
+
+    // Getters
+    public String getBookingId() { return bookingId; }
+    public String getCustomerId() { return customerId; }
+    public double getSubTotal() { return subTotal; }
+    public double getDiscountAmount() { return discountAmount; }
+    public double getTotalAfterDiscount() { return totalAfterDiscount; }
+    }
+
+////////////////////////////////////////////////////////////////////////////
+/// Discount class [4. DONE]
+class DiscountCriterion {
+    private int minSubtotal;
+    private double discountRate;
+
+    public DiscountCriterion(int minSubtotal, double discountRate) {
+        this.minSubtotal = minSubtotal;
+        this.discountRate = discountRate;
+    }
+
+    public int getMinSubtotal() { return minSubtotal; }
+    public double getDiscountRate() { return discountRate; }
+
+    public static double getBestDiscountRate(double price, List<DiscountCriterion> discounts) {
+        double best = 0;
+        for (DiscountCriterion d : discounts) {
+            if (price >= d.getMinSubtotal() && d.getDiscountRate() > best) {
+                best = d.getDiscountRate();
+            }
         }
-    
-    public String getid()                       {return bookingid;}
-    public String getcustomerid()               {return customerid;}
-    public double getsubTotal()                 {return subTotal;}
-    public double getTotal_after_discount()     {return Total_after_discount;}
+        return best;
+    }
 }
