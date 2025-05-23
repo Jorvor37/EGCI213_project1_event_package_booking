@@ -13,11 +13,10 @@ public class Jan_1 {
         */
         
         ArrayList<booking> bookings = new ArrayList<>();
-        Room[] rooms = new Room[3];
+        Room[] rooms = new Room[3]; 
         Meal[] meals = new Meal[3];
         
-        try{
-            Scanner scan = new Scanner(new File(inBookings));
+        try (Scanner scan = new Scanner(new File(inBookings))) {
             if(scan.hasNextLine()) scan.nextLine();
             
             while(scan.hasNextLine())
@@ -29,10 +28,12 @@ public class Jan_1 {
                     String[] part = line.split(",");
                     if (part.length < 6) throw new Exception ("Missing values");
                     
+                    //general information
                     String bookingid = part[0].trim();
                     String customerid = part[1].trim();
                     int days = Integer.parseInt(part[2].trim());
                     
+                    //rooms
                     String[] roomparts = part[3].trim().split(":");
                     if (roomparts.length != 3) throw new Exception ("Invalid room format");
                     int[] room_count = new int[3];
@@ -40,9 +41,9 @@ public class Jan_1 {
                     {
                         room_count[i] = Integer.parseInt(roomparts[i].trim());
                     }
-                    
                     int persons = Integer.parseInt(part[4].trim());
                     
+                    //meals
                     String[] mealparts = part[5].trim().split(":");
                     if (mealparts.length != 3) throw new Exception ("Invalid meal format");
                     int[] meal_count = new int[3];
@@ -51,8 +52,9 @@ public class Jan_1 {
                         meal_count[i] = Integer.parseInt(mealparts[i].trim());
                     }
                     
-                    booking booking = new booking(bookingid, customerid, days, room_count, persons, meal_count);
-                    booking.calculation_Total(rooms, meals, discounts);
+                    //create
+                    booking book = new booking(bookingid, customerid, days, room_count, persons, meal_count);
+                    book.calculation_Total(rooms, meals, discounts);
                     bookings.add(b);
                 
                 }catch (Exception e){
