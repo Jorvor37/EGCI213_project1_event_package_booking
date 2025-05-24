@@ -106,8 +106,12 @@ public class w4_project1 {
         }
 
 ////////////////////////////////////////////////////////////////////////////
-        //read bookings.txt
+        /*
+        read bookings.txt & bookings_errors
 
+        data that already parsed(read & store) are discarded as soon as 
+        the exception is thrown and the program jumps out of the try block.
+        */
         fileOpened = false;
         
         while(!fileOpened) {
@@ -117,34 +121,64 @@ public class w4_project1 {
                 while(scan.hasNextLine())
                 {
                     String line = scan.nextLine(); 
-                    if(line.isEmpty()) continue;
+                    if(line.trim.isEmpty()) continue;
 
                     try{
                         String[] part = line.split(",");
-                        if (part.length < 6) throw new Exception ("Missing values");
+                        if (part.length < 6) throw new IIE("Missing values");
 
-                        //general information
+                        //general information (no error handler needed)
                         String bookingid = part[0].trim();
                         String customerid = part[1].trim();
-                        int days = Integer.parseInt(part[2].trim());
+
+                        //days
+                        int days;
+                        try {
+                            days = Integer.parseInt(part[2].trim());
+                            if (days <= 0)
+                                throw new IIE("For days: \"" + part[2].trim() + "\"");
+                        } catch (NumberFormatException e) {
+                            throw new INFE("For days: \"" + part[2].trim() + "\"");
+                        }
 
                         //rooms
                         String[] roomparts = part[3].trim().split(":");
-                        if (roomparts.length != 3) throw new Exception ("Invalid room format");
+                        if (roomparts.length != 3) throw new IIE("For rooms: \"" + part[3].trim() + "\"");
+
                         int[] room_count = new int[3];
-                        for (int i = 0; i < 3; i++)
-                        {
-                            room_count[i] = Integer.parseInt(roomparts[i].trim());
+                        for (int i = 0; i < 3; i++) {
+                            try {
+                                room_count[i] = Integer.parseInt(roomparts[i].trim());
+                                if (room_count[i] < 0)
+                                    throw new IIE("For rooms: \"" + part[3].trim() + "\"");
+                            } catch (NumberFormatException e) {
+                                throw new INFE("For rooms: \"" + part[3].trim() + "\"");
+                            }
                         }
-                        int persons = Integer.parseInt(part[4].trim());
+
+                        //persons
+                        int persons;
+                        try {
+                            persons = Integer.parseInt(part[4].trim());
+                            if (persons <= 0)
+                                throw new IIE("For persons: \"" + part[4].trim() + "\"");
+                        } catch (NumberFormatException e) {
+                            throw new INFE("For persons: \"" + part[4].trim() + "\"");
+                        }
 
                         //meals
                         String[] mealparts = part[5].trim().split(":");
-                        if (mealparts.length != 3) throw new Exception ("Invalid meal format");
+                        if (mealparts.length != 3) throw new IIE("For meals: \"" + part[5].trim() + "\"");
+
                         int[] meal_count = new int[3];
-                        for (int i = 0; i < 3; i++)
-                        {
-                            meal_count[i] = Integer.parseInt(mealparts[i].trim());
+                        for (int i = 0; i < 3; i++) {
+                            try {
+                                meal_count[i] = Integer.parseInt(mealparts[i].trim());
+                                if (meal_count[i] < 0)
+                                    throw new IIE("For meals: \"" + part[5].trim() + "\"");
+                            } catch (NumberFormatException e) {
+                                throw new INFE("For meals: \"" + part[5].trim() + "\"");
+                            }
                         }
 
                         //create
@@ -152,8 +186,13 @@ public class w4_project1 {
                         book.calculateTotal(rooms, meals, discounts);
                         bookings.add(book);
 
-                    }catch (Exception e){
-                        System.err.println("Skipping invalid line: " + line);
+                    }catch (IIE e){
+                        if (e instanceof INFE) {
+                            System.err.println("java.lang.NumberFormatException: " + e.getMessage());
+                        } else {
+                            System.err.println("Project1.InvalidInputException: " + e.getMessage());
+                        }
+                        System.err.println(line + "skip\n");
                     }
                 }
                 
@@ -348,5 +387,22 @@ class DiscountCriterion {
             }
         }
         return best;
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////
+/// Error handler (Exceptions)
+
+//InvalidInputException
+class IIE extends Exception {
+    public IIE(String message) {
+        super(message);
+    }
+}
+
+//InvalidNumberFormatException
+class INFE extends IIE {
+    public INFE(String message) {
+        super(message);
     }
 }
