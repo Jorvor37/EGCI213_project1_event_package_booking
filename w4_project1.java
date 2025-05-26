@@ -15,9 +15,9 @@ public class w4_project1 {
     public static void main(String[] args){
         String path = "src/main/java/Project1_6680081/"; 
         
-        String inItems      = path + "items.txt";               //read Items
-        String inDiscounts  = path + "discounts.txt";           //read Discounts
-        String inBookings   = path + "bookings_errors.txt";     //read Bookings
+        String inItems      = path + "itemserr.txt";               //read Items
+        String inDiscounts  = path + "discountserr.txt";           //read Discounts
+        String inBookings   = path + "bookings_errorserr.txt";     //read Bookings
 
         ArrayList<Booking> bookings = new ArrayList<>();
         ArrayList<DiscountCriterion> discounts = new ArrayList<>();
@@ -39,7 +39,7 @@ public class w4_project1 {
                 int roomIdx = 0, mealIdx = 0;
                 while (scan.hasNextLine()) {
                     String line = scan.nextLine().trim();
-                    if (line.isEmpty()) continue;
+                    if (line.trim().isEmpty()) continue;
 
                     String[] parts = line.split(",");
 
@@ -86,7 +86,7 @@ public class w4_project1 {
 
                 while (scan.hasNextLine()) {
                     String line = scan.nextLine().trim();
-                    if (line.isEmpty()) continue;
+                    if (line.trim().isEmpty()) continue;
 
                     String[] parts = line.split(",");
                     if (parts.length < 2) {
@@ -130,7 +130,7 @@ public class w4_project1 {
                 while(scan.hasNextLine())
                 {
                     String line = scan.nextLine(); 
-                    if(line.isEmpty()) continue;
+                    if (line.trim().isEmpty()) continue;
 
                     try{
                         String[] part = line.split(",");
