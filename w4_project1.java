@@ -9,14 +9,15 @@ package Project1_6680081;
 
 import java.io.*;
 import java.util.*;
+import java.text.DecimalFormat;
 
 public class w4_project1 {
     public static void main(String[] args){
         String path = "src/main/java/Project1_6680081/"; 
         
-        String inItems      = path + "items.txt";       //read Items
-        String inDiscounts  = path + "discountss.txt";   //read Discounts
-        String inBookings   = path + "bookings.txt";    //read Bookings
+        String inItems      = path + "items.txt";               //read Items
+        String inDiscounts  = path + "discounts.txt";           //read Discounts
+        String inBookings   = path + "bookings_errors.txt";     //read Bookings
 
         ArrayList<Booking> bookings = new ArrayList<>();
         ArrayList<DiscountCriterion> discounts = new ArrayList<>();
@@ -62,13 +63,17 @@ public class w4_project1 {
                 
                 //flag file open sucessfully
                 fileOpened = true;
+                if(fileOpened)  {System.out.println("\nRead from: " + inItems);}
                 
             } catch (FileNotFoundException e) {
-                System.err.println("FileNotFoundException: " + path + inItems);
+                System.err.println("FileNotFoundException: " + inItems);
                 System.out.println("New file name = ");
                 inItems = path + userInput.nextLine().trim();
             }
         }
+        
+        //print Item
+        printItem(rooms, meals);
         
 ////////////////////////////////////////////////////////////////////////////
         // Read discounts.txt
@@ -97,13 +102,17 @@ public class w4_project1 {
                 
                 //flag file open sucessfully
                 fileOpened = true;
+                if(fileOpened)  {System.out.println("\nRead from: " + inDiscounts);}
                 
             } catch (FileNotFoundException e) {
-                System.err.println("FileNotFoundException: " + path + inDiscounts);
+                System.err.println("FileNotFoundException: " + inDiscounts);
                 System.out.println("New file name = ");
                 inDiscounts = path + userInput.nextLine().trim(); //don't forget path
             }
         }
+        
+        //print discounts
+        printDiscounts(discounts);
 
 ////////////////////////////////////////////////////////////////////////////
         /*
@@ -121,7 +130,7 @@ public class w4_project1 {
                 while(scan.hasNextLine())
                 {
                     String line = scan.nextLine(); 
-                    if(line.trim.isEmpty()) continue;
+                    if(line.isEmpty()) continue;
 
                     try{
                         String[] part = line.split(",");
@@ -192,49 +201,119 @@ public class w4_project1 {
                         } else {
                             System.err.println("Project1.InvalidInputException: " + e.getMessage());
                         }
-                        System.err.println(line + "skip\n");
+                        System.err.println(line + " skip\n");
                     }
                 }
                 
                 //flag file open sucessfully
                 fileOpened = true;
+                if(fileOpened)  {System.out.println("\nRead from: " + inBookings);}
                 
             }catch (FileNotFoundException e){
-                System.err.println("FileNotFoundException: " + path + inBookings);
+                System.err.println("FileNotFoundException: " + inBookings);
                 System.out.println("New file name = ");
                 inBookings = path + userInput.nextLine().trim(); //don't forget path
             }
             
         } //end of while fileOpened loop
+        
+        //print bookings
+        printBookings(bookings);
+    
+        //close Scanner UserInput
+        userInput.close();
+        
+        printCustomerSummary(bookings, userInput);
+    } //end of main
 
-////////////////////////////////////////////////////////////////////////////
-        // Sotring and printing TEST
+    ////////////////////////////////////////////////////////////////////////////
+    // Printing functions
+    
+    private static void printItem(Room[] rooms, Meal[] meals) {
+        DecimalFormat df = new DecimalFormat("#,##0.00");
+        for (Room room : rooms) {
+            System.out.printf("%-3s, %-20s rate (per day) = %10s    rate++ = %8s%n",
+                    room.getCode(), room.getName(), df.format(room.getUnitPrice()), df.format(room.getUnitPrice() * 1.18));
+        }
+        System.out.println();
+        for (Meal meal : meals) {
+            System.out.printf("%-3s, %-20s rate (per person per day) = %6s%n",
+                    meal.getCode(), meal.getName(), df.format(meal.getUnitPrice()));
+        }
+    }
+
+    private static void printDiscounts(List<DiscountCriterion> discounts) {
+        DecimalFormat df = new DecimalFormat("#,##0");
+
+        List<DiscountCriterion> sortedDiscounts = new ArrayList<>(discounts);
+        sortedDiscounts.sort(Comparator.comparingInt(DiscountCriterion::getMinSubtotal).reversed());
+
+        for (DiscountCriterion dc : sortedDiscounts) {
+            System.out.printf("If total bill >= %10s   discount = %4.1f%%%n",
+                    df.format(dc.getMinSubtotal()), dc.getDiscountRate());
+        }
+    }
+    
+    private static void printBookings(List<Booking> bookings) {
+        System.out.println("===== Booking Processing =====");
+
+        DecimalFormat df = new DecimalFormat("#,##0.00");
+
+        for (Booking b : bookings) {
+            System.out.printf("Booking %s, customer %s  >>  days = %d, persons = %d, rooms = %s, meals = %s%n",
+                    b.getBookingId(),
+                    b.getCustomerId(),
+                    b.getDays(),
+                    b.getPersons(),
+                    Arrays.toString(b.getRoomCount()),
+                    Arrays.toString(b.getMealCount()));
+
+            System.out.printf("    total room price   = %12s%n", df.format(b.getRoomTotal()));
+            System.out.printf("    total meal price   = %12s%n", df.format(b.getMealTotal()));
+            System.out.printf("    sub-total          = %12s%n", df.format(b.getSubTotal()));
+            System.out.printf("    discount %.1f%%      = %12s%n",
+                    b.getDiscountAmount() > 0 ? b.getDiscountAmount() * 100.0 / b.getSubTotal() : 0,
+                    df.format(b.getDiscountAmount()));
+            System.out.printf("    total              = %12s%n\n", df.format(b.getTotalAfterDiscount()));
+        }
+        System.out.printf("\n");
+    }
+    
+    public static void printCustomerSummary(List<Booking> bookings, Scanner userInput) {
         Map<String, Customer> customers = new HashMap<>();
 
+        // Group bookings by customer
         for (Booking b : bookings) {
             customers.putIfAbsent(b.getCustomerId(), new Customer(b.getCustomerId()));
             customers.get(b.getCustomerId()).addBooking(b);
         }
 
+        // Sort customers by total amount (descending), then by customer ID
         List<Customer> sortedCustomers = new ArrayList<>(customers.values());
         sortedCustomers.sort((c1, c2) -> {
             int cmp = Double.compare(c2.getTotalBookingAmount(), c1.getTotalBookingAmount());
-            if (cmp != 0) return cmp;
-            return c1.getCustomerId().compareTo(c2.getCustomerId());
+            return (cmp != 0) ? cmp : c1.getCustomerId().compareTo(c2.getCustomerId());
         });
 
-        for (Customer c : sortedCustomers) {
-            System.out.printf("Customer %s total booking amount: %.2f\n", c.getCustomerId(), c.getTotalBookingAmount());
-            System.out.print("Bookings: ");
-            for (Booking b : c.getBookings()) {
-                System.out.print(b.getBookingId() + " ");
-            }
-            System.out.println("\n");
-        }
+        // Decimal formatting
+        DecimalFormat formatter = new DecimalFormat("#,##0.00");
 
-        //close Scanner UserInput
-        userInput.close();
-    } //end of main
+        // Print summary
+        System.out.println("===== Customer Summary =====");
+        for (Customer c : sortedCustomers) {
+            String formattedAmount = formatter.format(c.getTotalBookingAmount());
+
+            // Join booking IDs with " , "
+            String bookingsList = String.join(" , ",
+                    c.getBookings().stream()
+                            .map(Booking::getBookingId)
+                            .toArray(String[]::new));
+
+            System.out.printf("%-3s >> total amount = %12s   bookings = [%s]%n",
+                    c.getCustomerId(), formattedAmount, bookingsList);
+        }
+    }
+    
 } //end of w4_project1
 
 
@@ -363,6 +442,12 @@ class Booking {
     public double getSubTotal() { return subTotal; }
     public double getDiscountAmount() { return discountAmount; }
     public double getTotalAfterDiscount() { return totalAfterDiscount; }
+    public int getDays() { return days; }
+    public int[] getRoomCount() { return roomCount; }
+    public int getPersons() { return persons; }
+    public int[] getMealCount() { return mealCount; }
+    public double getRoomTotal() { return roomTotal; }
+    public double getMealTotal() { return mealTotal; }
     }
 
 ////////////////////////////////////////////////////////////////////////////
