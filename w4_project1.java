@@ -233,7 +233,7 @@ public class w4_project1 {
         DecimalFormat df = new DecimalFormat("#,##0.00");
         for (Room room : rooms) {
             System.out.printf("%-3s, %-20s rate (per day) = %10s    rate++ = %8s%n",
-                    room.getCode(), room.getName(), df.format(room.getUnitPrice()), df.format(room.getUnitPrice() * 1.18));
+                    room.getCode(), room.getName(), df.format(room.getUnitPrice()), df.format(room.getUnitPrice()));
         }
         System.out.println();
         for (Meal meal : meals) {
