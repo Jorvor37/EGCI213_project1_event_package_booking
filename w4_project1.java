@@ -64,10 +64,9 @@ public class w4_project1 {
                 //flag file open sucessfully
                 fileOpened = true;
                 if(fileOpened)  {System.out.println("\nRead from: " + inItems);}
-                
             } catch (FileNotFoundException e) {
                 System.err.println("FileNotFoundException: " + inItems);
-                System.out.println("New file name = ");
+                System.err.println("New file name = ");
                 inItems = path + userInput.nextLine().trim();
             }
         }
@@ -106,7 +105,7 @@ public class w4_project1 {
                 
             } catch (FileNotFoundException e) {
                 System.err.println("FileNotFoundException: " + inDiscounts);
-                System.out.println("New file name = ");
+                System.err.println("New file name = ");
                 inDiscounts = path + userInput.nextLine().trim(); //don't forget path
             }
         }
@@ -211,7 +210,7 @@ public class w4_project1 {
                 
             }catch (FileNotFoundException e){
                 System.err.println("FileNotFoundException: " + inBookings);
-                System.out.println("New file name = ");
+                System.err.println("New file name = ");
                 inBookings = path + userInput.nextLine().trim(); //don't forget path
             }
             
@@ -233,7 +232,7 @@ public class w4_project1 {
         DecimalFormat df = new DecimalFormat("#,##0.00");
         for (Room room : rooms) {
             System.out.printf("%-3s, %-20s rate (per day) = %10s    rate++ = %8s%n",
-                    room.getCode(), room.getName(), df.format(room.getUnitPrice()), df.format(room.getUnitPrice()));
+                    room.getCode(), room.getName(), df.format(room.getUnitPrice()), df.format(room.getUnitPrice()* 1.10 * 1.07));
         }
         System.out.println();
         for (Meal meal : meals) {
